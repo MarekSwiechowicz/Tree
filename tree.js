@@ -1,6 +1,16 @@
 const readline = require("readline");
 const fs = require("fs");
 
+// Initialize readline interface
+const rl = readline.createInterface({
+  input: process.stdin,
+  output: process.stdout,
+});
+
+// Enable keypress events
+readline.emitKeypressEvents(process.stdin);
+if (process.stdin.isTTY) process.stdin.setRawMode(true);
+
 // Function to create the base Christmas tree
 function createChristmasTree(height) {
   let tree = [];
@@ -19,7 +29,7 @@ function sparkleChristmasTree(tree) {
     return line
       .split("")
       .map((char) => {
-        return Math.random() > 0.9 ? "o" : char; // Randomly replace some * with o to create a sparkle effect
+        return Math.random() > 0.9 ? "o" : char;
       })
       .join("");
   });
@@ -31,32 +41,28 @@ function displayTree(tree) {
   tree.forEach((line) => console.log(line));
 }
 
-// Setting up readline interface for user input
-const rl = readline.createInterface({
-  input: process.stdin,
-  output: process.stdout,
+// User input handling
+let userInput = "";
+console.log("Enter your text: ");
+
+process.stdin.on("keypress", (str, key) => {
+  if (key && key.ctrl && key.name === "c") {
+    process.exit(); // Exit on Ctrl+C
+  } else if (key && key.name === "return") {
+    fs.writeFileSync("user_input.txt", userInput);
+    console.log("\nYour text has been saved to user_input.txt");
+    process.exit();
+  } else {
+    userInput += str;
+  }
 });
 
-// Asking the user for input
-rl.question(
-  "Enter some text to store with the Christmas tree: ",
-  (inputText) => {
-    const height = 10; // Height of the Christmas tree
-    let christmasTree = createChristmasTree(height);
+const height = 10; // Height of the Christmas tree
+let christmasTree = createChristmasTree(height);
 
-    // Set an interval to update the tree display
-    setInterval(() => {
-      let sparklingTree = sparkleChristmasTree(christmasTree);
-      displayTree(sparklingTree);
-    }, 500); // Update every 500 milliseconds
-
-    // Save the static tree and input text to a file
-    const treeString = christmasTree.join("\n") + "\n" + inputText;
-    fs.writeFileSync("christmas_tree.txt", treeString);
-    console.log(
-      "Your text and the Christmas tree have been saved to christmas_tree.txt"
-    );
-
-    rl.close();
-  }
-);
+// Start an interval to continuously update the tree
+setInterval(() => {
+  let sparklingTree = sparkleChristmasTree(christmasTree);
+  displayTree(sparklingTree);
+  process.stdout.write("Enter your text: " + userInput); // Display user input
+}, 500);
